@@ -10,16 +10,11 @@ const userRoutes = require("./routes/userRoutes");
 
 const app = express();
 
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:5174",
-      "https://railpulse-frontend-3ot3kszmt-berriesinaboxs-projects.vercel.app",
-      process.env.CLIENT_URL,
-    ].filter(Boolean),
-  })
-);
+
+app.use(cors({
+  origin: true
+}));
+
 
 app.use(express.json());
 
