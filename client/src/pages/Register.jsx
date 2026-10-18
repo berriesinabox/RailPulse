@@ -23,7 +23,7 @@ function Register() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/auth/register",
+        "https://rail-pulse-ldu9.vercel.app/api/auth/register",
         {
           method: "POST",
           headers: {

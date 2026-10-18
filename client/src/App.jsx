@@ -38,7 +38,7 @@ function App() {
 
       try {
         const response = await fetch(
-          "http://localhost:5000/api/faults",
+          "https://rail-pulse-ldu9.vercel.app/api/faults",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -93,7 +93,7 @@ function App() {
     async function fetchEngineers() {
       try {
         const response = await fetch(
-          "http://localhost:5000/api/users/engineers",
+          "https://rail-pulse-ldu9.vercel.app/api/users/engineers",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -121,7 +121,7 @@ function App() {
   // Assign a fault to an Engineer
   async function assignEngineer(faultId, engineerId) {
     const response = await fetch(
-      `http://localhost:5000/api/faults/${faultId}/assign`,
+      `https://rail-pulse-ldu9.vercel.app/api/faults/${faultId}/assign`,
       {
         method: "PATCH",
         headers: {
@@ -155,7 +155,7 @@ function App() {
   // Report a fault
   async function addFault(faultData) {
     const response = await fetch(
-      "http://localhost:5000/api/faults",
+      "https://rail-pulse-ldu9.vercel.app/api/faults",
       {
         method: "POST",
         headers: {
@@ -188,7 +188,7 @@ function App() {
   // Delete a fault
   async function deleteFault(id) {
     const response = await fetch(
-      `http://localhost:5000/api/faults/${id}`,
+      `https://rail-pulse-ldu9.vercel.app/api/faults/${id}`,
       {
         method: "DELETE",
         headers: {
@@ -213,7 +213,7 @@ function App() {
   // Update a fault's status
   async function updateStatus(id, status) {
     const response = await fetch(
-      `http://localhost:5000/api/faults/${id}/status`,
+      `https://rail-pulse-ldu9.vercel.app/api/faults/${id}/status`,
       {
         method: "PATCH",
         headers: {
