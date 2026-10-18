@@ -22,8 +22,9 @@ router.get("/", protect, async (req, res) => {
     }
     // Admin can view all faults.
 
-    const faults = await Fault.find(filter).sort({ createdAt: -1 });
-
+    const faults = await Fault.find(filter)
+      .populate("assignedEngineer", "name email")
+      .sort({ createdAt: -1 });
     res.status(200).json(faults);
   } catch (error) {
     console.error("Fetch faults error:", error.message);

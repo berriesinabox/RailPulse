@@ -44,7 +44,13 @@ function Login() {
       }
 
       login(data.token, data.user);
-      navigate("/");
+      const roleRoutes = {
+        Passenger: "/passenger",
+        Engineer: "/engineer",
+        Admin: "/admin",
+      };
+
+      navigate(roleRoutes[data.user.role] || "/");
     } catch (err) {
       setError(err.message || "Unable to log in. Please try again.");
     } finally {

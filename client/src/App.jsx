@@ -15,18 +15,18 @@ import Register from "./pages/Register";
 import { useAuth } from "./context/AuthContext";
 
 function App() {
-  const { token, user, logout } = useAuth();
-
+  const { token, user } = useAuth();
+  const [engineers, setEngineers] = useState([]);
   const [faults, setFaults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Fetch faults only after login
+  // Fetch faults after login
   useEffect(() => {
     let cancelled = false;
 
     async function fetchFaults() {
-      if (!token) {
+      if (!token || !user) {
         setFaults([]);
         setLoading(false);
         setError("");
@@ -49,7 +49,9 @@ function App() {
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.message || "Failed to fetch faults.");
+          throw new Error(
+            data.message || "Failed to fetch faults."
+          );
         }
 
         if (!cancelled) {
@@ -62,7 +64,9 @@ function App() {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err.message || "Failed to fetch faults.");
+          setError(
+            err.message || "Failed to fetch faults."
+          );
         }
       } finally {
         if (!cancelled) {
@@ -76,7 +80,77 @@ function App() {
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, [token, user]);
+
+  
+  // Fetch Engineers for the Admin dashboard
+  useEffect(() => {
+    if (!token || user?.role !== "Admin") {
+      setEngineers([]);
+      return;
+    }
+
+    async function fetchEngineers() {
+      try {
+        const response = await fetch(
+          "http://localhost:5000/api/users/engineers",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message || "Failed to fetch Engineers."
+          );
+        }
+
+        setEngineers(data.engineers || []);
+      } catch (err) {
+        console.error("Fetch Engineers error:", err.message);
+      }
+    }
+
+    fetchEngineers();
+  }, [token, user?.role]);
+
+  // Assign a fault to an Engineer
+  async function assignEngineer(faultId, engineerId) {
+    const response = await fetch(
+      `http://localhost:5000/api/faults/${faultId}/assign`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ engineerId }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.message || "Failed to assign Engineer."
+      );
+    }
+
+    const updatedFault = {
+      ...data.fault,
+      id: data.fault._id,
+    };
+
+    setFaults((previous) =>
+      previous.map((fault) =>
+        fault.id === faultId ? updatedFault : fault
+      )
+    );
+  }
 
   // Report a fault
   async function addFault(faultData) {
@@ -95,7 +169,9 @@ function App() {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || "Failed to report the fault.");
+      throw new Error(
+        data.message || "Failed to report the fault."
+      );
     }
 
     const savedFault = {
@@ -103,7 +179,10 @@ function App() {
       id: data.fault._id,
     };
 
-    setFaults((previous) => [savedFault, ...previous]);
+    setFaults((previous) => [
+      savedFault,
+      ...previous,
+    ]);
   }
 
   // Delete a fault
@@ -121,7 +200,9 @@ function App() {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || "Failed to delete the fault.");
+      throw new Error(
+        data.message || "Failed to delete the fault."
+      );
     }
 
     setFaults((previous) =>
@@ -146,7 +227,9 @@ function App() {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || "Failed to update status.");
+      throw new Error(
+        data.message || "Failed to update status."
+      );
     }
 
     const updatedFault = {
@@ -161,40 +244,141 @@ function App() {
     );
   }
 
-  // Protect pages that require login
+  // Require login
   function requireLogin(element) {
-    return token && user ? element : <Navigate to="/login" replace />;
+    return token && user
+      ? element
+      : <Navigate to="/login" replace />;
   }
+
+  // Require a specific role
+  function requireRole(role, element) {
+    if (!token || !user) {
+      return <Navigate to="/login" replace />;
+    }
+
+    if (user.role === role) {
+      return element;
+    }
+
+    // Redirect logged-in users to their own dashboard
+    const roleRoutes = {
+      Passenger: "/passenger",
+      Engineer: "/engineer",
+      Admin: "/admin",
+    };
+
+    return (
+      <Navigate
+        to={roleRoutes[user.role] || "/login"}
+        replace
+      />
+    );
+  }
+
+  // Shared dashboard content
+  const dashboardContent = (
+    <>
+      {loading && (
+        <p className="api-message">
+          Loading faults...
+        </p>
+      )}
+
+      {error && (
+        <p className="api-error" role="alert">
+          {error}
+        </p>
+      )}
+
+      <Dashboard
+        faults={faults}
+        engineers={engineers}
+        onAssignEngineer={assignEngineer}
+        onDelete={deleteFault}
+        onUpdateStatus={updateStatus}
+      />
+    </>
+  );
 
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        {/* Public routes */}
+        <Route
+          path="/login"
+          element={
+            token && user ? (
+              <Navigate
+                to={
+                  {
+                    Passenger: "/passenger",
+                    Engineer: "/engineer",
+                    Admin: "/admin",
+                  }[user.role] || "/"
+                }
+                replace
+              />
+            ) : (
+              <Login />
+            )
+          }
+        />
 
         <Route
+          path="/register"
+          element={<Register />}
+        />
+
+        {/* Default route */}
+        <Route
           path="/"
-          element={requireLogin(
-            <>
-              {loading && (
-                <p className="api-message">Loading faults...</p>
-              )}
-
-              {error && (
-                <p className="api-error" role="alert">
-                  {error}
-                </p>
-              )}
-
-              <Dashboard
-                faults={faults}
-                onDelete={deleteFault}
-                onUpdateStatus={updateStatus}
+          element={
+            token && user ? (
+              <Navigate
+                to={
+                  {
+                    Passenger: "/passenger",
+                    Engineer: "/engineer",
+                    Admin: "/admin",
+                  }[user.role] || "/login"
+                }
+                replace
               />
-            </>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        {/* Passenger dashboard */}
+        <Route
+          path="/passenger"
+          element={requireRole(
+            "Passenger",
+            dashboardContent
           )}
         />
 
+        {/* Engineer dashboard */}
+        <Route
+          path="/engineer"
+          element={requireRole(
+            "Engineer",
+            dashboardContent
+          )}
+        />
+
+        {/* Admin dashboard */}
+        <Route
+          path="/admin"
+          element={requireRole(
+            "Admin",
+            dashboardContent
+          )}
+        />
+
+        {/* Report a fault: all logged-in roles */}
         <Route
           path="/report-fault"
           element={requireLogin(
@@ -202,6 +386,7 @@ function App() {
           )}
         />
 
+        {/* Fault list: all logged-in roles */}
         <Route
           path="/faults"
           element={requireLogin(
@@ -213,6 +398,7 @@ function App() {
           )}
         />
 
+        /* Unknown routes */
         <Route
           path="*"
           element={<Navigate to="/" replace />}

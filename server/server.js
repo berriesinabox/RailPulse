@@ -7,6 +7,7 @@ const faultRoutes = require("./routes/faultRoutes");
 const app = express();
 const authRoutes = require("./routes/authRoutes");
 const PORT = process.env.PORT || 5000;
+const userRoutes = require("./routes/userRoutes");
 
 app.use(
   cors({
@@ -19,6 +20,8 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 
 app.use("/api/faults", faultRoutes);
+
+app.use("/api/users", userRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "RailPulse API is running!" });

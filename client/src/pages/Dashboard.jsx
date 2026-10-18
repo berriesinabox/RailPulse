@@ -3,8 +3,18 @@ import { useState } from "react";
 import Navbar from "../components/Navbar";
 import FaultCard from "../components/FaultCard";
 import Footer from "../components/Footer";
+import { useAuth } from "../context/AuthContext";
 
-function Dashboard({ faults, onDelete, onUpdateStatus }) {
+function Dashboard({
+  faults,
+  engineers = [],
+  onAssignEngineer,
+  onDelete,
+  onUpdateStatus,
+}) {
+  const { user } = useAuth();
+
+  const role = user?.role;
   const [search, setSearch] = useState("");
   const [filterSeverity, setFilterSeverity] = useState("All");
 
@@ -40,9 +50,21 @@ function Dashboard({ faults, onDelete, onUpdateStatus }) {
         <div className="dashboard-header">
           <div>
             <p className="eyebrow">RAILWAY MAINTENANCE SYSTEM</p>
-            <h1>Fault Dashboard</h1>
+
+            <h1>
+              {role === "Admin"
+                ? "Admin Dashboard"
+                : role === "Engineer"
+                ? "Engineer Dashboard"
+                : "Passenger Dashboard"}
+            </h1>
+
             <p className="subtitle">
-              Monitor, report and manage railway faults.
+              {role === "Admin"
+                ? "Monitor railway faults and assign maintenance tasks."
+                : role === "Engineer"
+                ? "Track assigned faults and update repair progress."
+                : "Report railway faults and track their status."}
             </p>
           </div>
         </div>
@@ -103,6 +125,10 @@ function Dashboard({ faults, onDelete, onUpdateStatus }) {
                   title={fault.title}
                   severity={fault.severity}
                   status={fault.status}
+                  role={role}
+                  assignedEngineer={fault.assignedEngineer}
+                  engineers={engineers}
+                  onAssignEngineer={onAssignEngineer}
                   onDelete={onDelete}
                   onUpdateStatus={onUpdateStatus}
                 />
