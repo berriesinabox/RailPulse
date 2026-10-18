@@ -15,6 +15,7 @@ app.use(
     origin: [
       "http://localhost:5173",
       "http://localhost:5174",
+      "https://railpulse-frontend-3ot3kszmt-berriesinaboxs-projects.vercel.app",
       process.env.CLIENT_URL,
     ].filter(Boolean),
   })
